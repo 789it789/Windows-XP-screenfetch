@@ -1,0 +1,99 @@
+	Add-Type -AssemblyName System.Windows.Forms
+	
+	$Horizontal = $PrimaryResolution.Item1;
+	$Vertical = $PrimaryResolution.Item2;
+	$uptime = ((gwmi Win32_OperatingSystem).ConvertToDateTime((gwmi Win32_OperatingSystem).LocalDateTime) - 
+	           (gwmi Win32_OperatingSystem).ConvertToDateTime((gwmi Win32_OperatingSystem).LastBootUpTime));
+	$Username = $env:username;
+	$Machine = (gwmi Win32_OperatingSystem).CSName;
+	$OS = (gwmi Win32_OperatingSystem).Caption;
+	$BitVer = (gwmi Win32_OperatingSystem).OSArchitecture;
+	$Kernel = (gwmi Win32_OperatingSystem).Version;
+	$CPU = (((gwmi Win32_Processor).Name) -replace '\s+', ' ');
+	$GPU = (gwmi Win32_DisplayConfiguration).DeviceName;
+	$TotalRam = ([math]::Truncate((gwmi Win32_ComputerSystem).TotalPhysicalMemory / 1MB));
+	$Logo = @(
+	@( 	{ Write-Host "`n" -nonewline } ),
+	@( 	{ Write-Host '        ,.=:!!t3Z3z.,               ' -foregroundcolor "red" -nonewline } ),
+	@( 	{ Write-Host '       :tt:::tt333EE3               ' -foregroundcolor "red" -nonewline } ),
+	@(	{ Write-Host '       Et:::ztt33EEEL ' -foregroundcolor "red" -nonewline }, 
+		{ Write-Host '@Ee.,      ..,' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '      ;tt:::tt333EE7 ' -foregroundcolor "red" -nonewline },
+		{ Write-Host ';EEEEEEttttt33#' -foregroundcolor "green" -nonewline } ),
+	@(  { Write-Host '     :Et:::zt333EEQ. ' -foregroundcolor "red" -nonewline },
+		{ Write-Host '$EEEEEttttt33QL' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '     it::::tt333EEF ' -foregroundcolor "red" -nonewline },
+		{ Write-Host '@EEEEEEttttt33F ' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '    ;3=*^```"*4EEV ' -foregroundcolor "red" -nonewline },
+		{ Write-Host ':EEEEEEttttt33@. ' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '    ,.=::::!t=., ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host '` ' -foregroundcolor "red" -nonewline },
+		{ Write-Host '@EEEEEEtttz33QF  ' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '   ;::::::::zt33)   ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host '"4EEEtttji3P*   ' -foregroundcolor "green" -nonewline } ),
+	@(	{ Write-Host '  :t::::::::tt33.' -foregroundcolor "blue" -nonewline },
+		{ Write-Host ' :Z3z.. `` ,..g.   ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host '  i::::::::zt33F ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host 'AEEEtttt::::ztF    ' -foregroundcolor "yellow" -nonewline } ),
+	@( 	{ Write-Host ' ;:::::::::t33V ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host ';EEEttttt::::t3     ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host ' E::::::::zt33L ' -foregroundcolor "blue" -nonewline }, 
+		{ Write-Host '@EEEtttt::::z3F     ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host '{3=*^```"*4E3) ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host ';EEEtttt:::::tZ`     ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host '             ` ' -foregroundcolor "blue" -nonewline },
+		{ Write-Host ':EEEEtttt::::z7      ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host '                 ' -foregroundcolor "blue" -nonewline }, 
+		{ Write-Host '"VEzjt:;;z>*`      ' -foregroundcolor "yellow" -nonewline } ),
+	@(	{ Write-Host "`n" } )
+)
+# Returns an array of scriptblocks, containing the commands necessary to write one line of system information
+Function Get-LineScriptBlock($Label, $Value, $LabelSize=11, $PadLeft = 4 ) {
+	# Using [ScriptBlock]::Create rather than literal notation to force PowerShell to 
+	# store value of variables in scriptblock, rather than the variables themselves.
+	@( [ScriptBlock]::Create("Write-Host `"$(' ' * $PadLeft)$($Label.PadLeft($LabelSize)) `" -foregroundcolor Red -nonewline"),
+    [ScriptBlock]::Create("Write-Host `"$Value`" -foregroundcolor White") )
+}
+$AllInfo = @(
+	@( 	{Write-Host $Username -f red -nonewline},
+	 	{Write-Host "@" -f gray -nonewline},
+	 	{Write-Host $Machine -f red} ),
+	@( 	{Write-Host "OS: " -f Red -NoNewline},
+	 	{Write-Host $OS $BitVer} ),
+	@( 	{Write-Host "Kernel: " -f Red -nonewline},
+	 	{Write-Host $Kernel} ),
+	@( 	{Write-Host "Uptime: " -f Red  -nonewline},
+	 	{Write-Host $uptime.Days"d " $uptime.Hours"h " $uptime.Minutes"m " $uptime.Seconds"s " -separator ""} ),
+	@( 	{Write-Host "Shell: " -f Red -nonewline},
+	 	{Write-Host "PowerShell $($PSVersionTable.PSVersion.ToString())"} ),
+	@( 	{Write-Host "Window Manager: " -f Red -nonewline},
+	 	{Write-Host "DWM"} ),
+	@( 	{Write-Host "Font: " -f Red -nonewline},
+	 	{Write-Host "Segoe UI"} ),
+	@( 	{Write-Host "CPU: " -f Red -nonewline},
+	 	{Write-Host $CPU} ),
+	@( 	{Write-Host "RAM: " -f Red -nonewline},
+	 	{Write-Host "$TotalRam MB"} )
+	)
+    
+    
+# Add enough blank lines so that $Logo and $AllInfo are the same size
+while ($Logo.Count -gt $AllInfo.Count) {
+	$AllInfo += @(	{ Write-Host } )
+}
+
+# Add enough blank lines so that $Logo and $AllInfo are the same size
+while ($AllInfo.Count -gt $Logo.Count) {
+	$Logo += @(	{ Write-Host } )
+}
+
+# Loop through both arrays and execute the script blocks
+for ($i = 0; $i -lt $Logo.Count; $i++) {
+	$Logo[$i] | % { & $_ }
+	$AllInfo[$i] | % { & $_ }
+}
+
+while($true)
+{
+    $i++
+}
